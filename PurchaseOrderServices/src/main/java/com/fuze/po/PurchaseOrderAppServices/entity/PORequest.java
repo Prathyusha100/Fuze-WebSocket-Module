@@ -38,7 +38,7 @@ public class PORequest {
 	private String projectStatus;
 	@Column(name = "project_type")
 	private String projectType;
-	@Column(name = "teritory")
+	@Column(name = "territory")
 	private String teritory;
 	@Column(name = "market")
 	private String market;
