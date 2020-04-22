@@ -1,4 +1,4 @@
-package com.fuze.po.PurchaseOrderAppServices.forms;
+package com.fuze.websockets.dao.forms;
 
 public class PORequestForm {
 
