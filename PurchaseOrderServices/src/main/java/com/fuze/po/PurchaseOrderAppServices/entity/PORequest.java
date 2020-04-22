@@ -42,7 +42,7 @@ public class PORequest {
 	private String teritory;
 	@Column(name = "market")
 	private String market;
-	@Column(name = "site_tracker")
+	@Column(name = "sitetracker")
 	private String siteTracker;
 	@Column(name = "customer_project_type")
 	private String customerProjectType;
