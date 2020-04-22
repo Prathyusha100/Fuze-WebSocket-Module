@@ -14,11 +14,17 @@
 <title>Fuze Ginger - Tables</title>
 <link href="../vendor/fontawesome-free/css/all.min.css" rel="stylesheet"
 	type="text/css">
+	 <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2020.1.406/styles/kendo.default-v2.min.css" />
+	  <script src="https://kendo.cdn.telerik.com/2020.1.406/js/jquery.min.js"></script>
+	 
+	
 <style type="text/css">
 #details-container {
 	padding: 10px;
 }
-
+.margin-50{
+margin-left:50px;
+}
 #details-container h2 {
 	margin: 0;
 }
@@ -45,13 +51,9 @@
 <link href="../css/sb-admin-2.min.css" rel="stylesheet">
 
 <!-- Custom styles for this page -->
-<link href="../vendor/datatables/dataTables.bootstrap4.min.css"
-	rel="stylesheet">
+<link href="../vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
 <link rel="stylesheet"
 	href="https://kendo.cdn.telerik.com/2019.3.1023/styles/kendo.default-v2.min.css" />
-<script src="https://kendo.cdn.telerik.com/2019.3.1023/js/jquery.min.js"></script>
-<script
-	src="https://kendo.cdn.telerik.com/2019.3.1023/js/kendo.all.min.js"></script>
 </head>
 
 <body id="page-top">
@@ -124,7 +126,7 @@
                        	<a class="nav-link dropdown-toggle" href="#" id="userDropdown"
 							role="button" data-toggle="dropdown" aria-haspopup="true"
 							aria-expanded="false"> <span
-								class="mr-2 d-none d-lg-inline text-gray-600 small" id="currentEmployee"></span> <img
+								class="mr-2 d-none d-lg-inline text-gray-600 small" id="currentEmployee">Roshan Sigh</span> <img
 								class="img-profile rounded-circle"
 								src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png">
 						</a>
@@ -161,7 +163,8 @@
 					<!-- DataTales Example -->
 					<div class="card shadow mb-4">
 						<div class="card-header py-3">
-							<h6 class="m-0 font-weight-bold text-primary">Product List</h6>
+							<h6 class="m-0 font-weight-bold text-primary">Purchase Order</h6>
+							<!-- <button class="btn btn-sm btn-primary margin-50" onclick="socketConnection()" >Connect</button> -->
 						</div>
 						<div class="card-body">
 							<div class="table-responsive">
@@ -190,15 +193,7 @@
 			</div>
 			<!-- End of Main Content -->
 
-			<!-- Footer -->
-			<footer class="sticky-footer bg-white">
-				<div class="container my-auto">
-					<div class="copyright text-center my-auto">
-						<span>Copyright &copy; Your Website 2019</span>
-					</div>
-				</div>
-			</footer>
-			<!-- End of Footer -->
+		
 
 		
 		<!-- End of Content Wrapper -->
@@ -231,166 +226,17 @@
 			</div>
 		</div>
 	</div>
-
-<script>
-
-$(function(){
-    if (typeof WebSocket === "undefined") {
-        $("#grid").html('This demo requires <a href="https://en.wikipedia.org/wiki/WebSocket">WebSocket</a> support.<a href="http://updateyourbrowser.net/" title="Update Your Browser"><img src="http://updateyourbrowser.net/uyb.jpg" border="0" alt="Update Your Browser" /></a>');
-        return;
-    }
-
-    /* let socket = new ClusterWS({ url: 'wss://www.koepiste.fi/scyllaTest' })
-    socket.on('error',()=>console.log)
-    socket.on('connect',()=>{
-        console.log('ClusterWS connected')
-    }) */
-    
-    var ws = new SockJS('http://localhost:8080/fuze-websocket');
-    stompClient = Stomp.over(ws);
-    stompClient.connect({}, function (frame) {
-        setConnected(true);
-        console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/greetings', function (greeting) {
-            showGreeting(JSON.parse(greeting.body).content);
-        });
-       
-    });
-    /*  var host = "ws://localhost:8080/fuze-websocket";
-    var ws = new WebSocket(host);
-  */
-    //Bind the grid when the socket connects
-    ws.onopen = function() {
-        $("#grid").data("kendoGrid").dataSource.fetch();
-    };
-
-    //Close the socket when the browser window is closed.
-    window.onbeforeunload = function() {
-        ws.close();
-    }
-
-    //Helper function to send data through the socket
-    function send(ws, request, callback) {
-        if (ws.readyState != 1) {
-            alert("Socket was closed. Please reload the page.");
-            return;
-        }
-
-        //Assign unique id to the request. Will use that to distinguish the response.
-        request.id = kendo.guid();
-
-        //Listen to the "message" event to get server response
-        ws.addEventListener("message", function(e) {
-            var result = JSON.parse(e.data);
-
-            //Check if the response is for the current request
-            if (result.id == request.id) {
-                //Stop listening
-                ws.removeEventListener("message", arguments.callee);
-
-                //Invoke the callback with the result
-                callback(result);
-            }
-        });
-
-        //Send the data to the server
-        ws.send(JSON.stringify(request));
-    }
-
-    $("#notification").kendoNotification({
-        width: "100%",
-        position: {
-            top: 0,
-            left: 0
-        }
-    });
-
-    $("#grid").kendoGrid({
-        autoBind: false,
-        editable: true,
-        sortable: true,
-        columns: [
-        	 { field:"poName", title: "PO Name", width: "140px",template:"<a href='javascript:showDetail(#=id#)' id='name-link'>#=name#</a>" },
-	    	 { field: "id", title:"ID", width: "80px" },
-	    	 { field: "teritory", title:"Teritory", width: "120px" },
-             { field: "market", title:"Market", width: "120px" },
-            // { field: "role", title:"Role", width: "120px" ,editor: categoryDropDownEditor, template: "#=role.text#"},
-             { field: "pslc", title:"pslc", width: "120px" },
-             { field: "id", title:"IN_Stock", width: "120px" },
-             { command: ["destroy"], title: "&nbsp;", width: "200px" }
-             
-        ],
-        toolbar: ["create"],
-        dataSource: {
-            // Handle the push event to display notifications when push updates arrive
-            push: function(e) {
-                var notification = $("#notification").data("kendoNotification");
-                notification.success(e.type);
-            },
-            pageSize: 4,
-            autoSync: true,
-            schema: {
-                model: {
-                    id: "ProductID",
-                 	 poName: { type: "string",validation: { required: true} },
-                	 teritory: { type: "string" ,validation: { required: true}},
-                	 market: {type:"string"},
-                	 pslc: {type:"string"},
-                	 poStatus: { type: "string" ,validation: { required: true}},
-                	 siteTracker:{ type: "string",validation: { required: true} }
-  
-                },
-                data: "data"
-            },
-            sort: [ { field: "CreatedAt", dir: "desc" }],
-            transport: {
-                push: function(options) {
-                    //Listen to the "message" event fired when the server pushes data
-                    ws.addEventListener("message", function(e) {
-                        var result = JSON.parse(e.data);
-
-                        //Check what the push type is and invoke the corresponding callback.
-                        if (result.type == "push-update") {
-                            options.pushUpdate(result);
-                        } else if (result.type == "push-destroy") {
-                            options.pushDestroy(result);
-                        } else if (result.type == "push-create") {
-                            options.pushCreate(result);
-                        }
-                    });
-                },
-                read: function(options) {
-                    var request = { type: "read" };
-
-                    send(ws, request, function(result) {
-                        options.success(result);
-                    });
-                },
-                update: function(options) {
-                    var request = { type: "update", data: [options.data] };
-
-                    send(ws, request, options.success);
-                },
-                destroy: function(options) {
-                    var request = { type: "destroy", data: [options.data] };
-
-                    send(ws, request, options.success);
-                },
-                create: function(options) {
-                    var request = { type: "create", data: [options.data] };
-
-                    send(ws, request, options.success);
-                }
-            }
-        }
-    });
-});
-</script>
+<script src="https://kendo.cdn.telerik.com/2020.1.406/js/kendo.all.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script> 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
 	<script src="../vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 	<script src="../js/sb-admin-2.min.js"></script>
 	<script src="../js/custom.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script> 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>	
+
+	
+	
+
+    
 
 
 </body>

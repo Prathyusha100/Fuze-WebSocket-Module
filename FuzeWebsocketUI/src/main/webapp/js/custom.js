@@ -1,197 +1,350 @@
- function isNumeric(n) {
-          return !isNaN(parseFloat(n)) && isFinite(n);
-        }
+var resultData=[];
+var readDataList = [];
+var socketCurrentData =[];
+var socketdata =[];
+var socketStatus = false;
+var dataSource12 = new kendo.data.DataSource({
+    transport: {
+      read:  {
+      	url: "http://localhost:8088/RePO/getPoRequest",
+          dataType: "json",
+          cache: false,
+      }
+    }
+  });
+var stompClient = null;
+//$('#btn').click(function () {// if you want to do this on any click then enable
+    var socket = new SockJS('http://localhost:8085/fuze-websocket');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, function (frame) {
+        // setConnected(true);
+        console.log('Connected: ' + frame);
+        stompClient.subscribe('/project/data', function (greeting) {
+            var currrentData = JSON.parse(greeting.body);
+            socketdata=currrentData;
+            console.log(socketdata);
+            console.log(currrentData);
+            
+           
+       	 dataSource12.fetch(function(){
+       		
+          	  var data = dataSource12._pristineData;
+          	if(currrentData != ""){
+          		
+          	
+       		  $.each(data, function(index, value) {
+       			  $.each(socketdata, function(index1, value1) {
+       				 if(data[index].siteProjectsId == socketdata[index1].SITE_PROJECT_ID && data[index].siteInfoId == socketdata[index1].SITE_INFO_ID){
+              			 data[index].poName = value1.PO_NAME?value1.PO_NAME :data[index].poName;
+              			 data[index].siteName = value1.SITE_NAME?value1.SITE_NAME :data[index].siteName;
+              			 data[index].projectName = value1.PROJECT_NAME?value1.PROJECT_NAME :data[index].projectName;	
+              			 data[index].poStatus = value1.PO_STATUS?value1.PO_STATUS :data[index].poStatus;
+              			 data[index].projectStatus = value1.PROJECT_STATUS?value1.PROJECT_STATUS :data[index].projectStatus;
+              			 data[index].pslc = value1.PSLC?value1.PSLC :data[index].pslc;	
+              			 }
+       			  
+              		}) 
+       		  console.log(data.length);  // displays "77"
+       			  socketCurrentData = data;
+       			  console.log(socketCurrentData);
+       			 $("#grid").kendoGrid({
+						dataSource: {
+					      transport: {
+					         read: function (e) {
+					             //readData(options);
+					        	 e.success(socketCurrentData);
+					        //  window.location.replace("dashboard");
+					             },
+					        update: function (options) {
+					        updateRow(options);
+					        window.location.replace("/");
+					       
+					             },
+					        
+					             destroy: function (options) {
+					            	 deleteRow(options);
+					                readData(options);
+					            	    
+						             },
+						        
+					             create: function (options) {
+						            createRow(options);
+						            window.location.replace("/");
+						            	  },
+					          parameterMap: function (options, operation) {
+					        		if (operation !== "read" && options.models) {
+					              		return { models: kendo.stringify(options.models) };
+					              		}
+					            	}
+					          },
+					        schema: {
+					        	 model: {
+                                    id: "siteProjectsId",
+                                    fields: {
+                                   	 siteProjectsId: {type:"string"},
+                                   	 siteInfoId: {type:"string"},
+                                   	 projectName: {type:"string"},
+                                   	 siteName: {type:"string"},
+                                   	 pslc: {type:"string"},
+                                   	 poName: {type:"string"},
+                                   	 teritory: {type:"string"},
+                                   	 market: {type:"string"},
+                                   	 poStatus: {type:"string"},
+                                   	 siteTracker: {type:"string"},
+                                   	 projectStatus: {type:"string"},
+                                   	 projectType: {type:"string"},
+                                   	 customerProjectType: {type:"string"},
+                                   	 lastModifiedBy: {type:"string"},
+                                   	 
+                                   	 
+                                    }
+                                }
+					        },
+					         pageSize: 7
+					    },
+					    pageable: true,
+                       sortable: true,
+                       filterable: true,
+					    resizable:true,
 
-        function getBoolean(str) {
-          if("true".startsWith(str)){
-            return true;
-          } else if("false".startsWith(str)){
-            return false;
-          } else {
-            return null;
-          }          
-        }
+					    toolbar: [
+					        { name: "create", text: "Add" }
+					      ],
+					    columns: [
+					    	{ field:"siteProjectsId", title:"Site Projects Id", width: "150px",editable: isEditable },
+					    	{ field:"siteInfoId", title:"Site Info Id", width: "120px" ,editable: isEditable},
+					    	{ field:"projectName", title:"Project Name", width: "150px" },
+					    	{ field:"siteName", title:"Site Name", width: "120px" },
+					    	{ field:"pslc", title:"PSLC", width: "120px" },
+					    	{ field:"poName", title:"Purchase Order Name", width: "180px" },
+					    	//{ field:"teritory", title:"Teritory", width: "120px" },
+					    	//{ field:"market" ,title:"Market", width: "120px" },
+					    	//{ field:"poStatus", title:"PO Status", width: "120px" },
+					    	{ field:"siteTracker", title:"Site Trakcer", width: "120px" },
+					    	{ field:"projectStatus", title:"Project Status", width: "120px",customBoolEditor },
+					    	//{ field:"projectType", title:"Project Type", width: "120px" },
+					    	//{ field:"customerProjectType", title:"Customer Project Type", width: "120px" },
+					    	//{ field:"lastModifiedBy", title:"Last Modified", width: "120px" ,customBoolEditor },
+                            { command: ["edit", "destroy"], title: "&nbsp;", width: "200px" }
+                            ],
+                  editable: "popup"
+				});
+       		});
+           
+            
+      
+    }
+    else{
+        	
+			 socketCurrentData = data;
+			  $("#grid").kendoGrid({
+					dataSource: {
+				      transport: {
+				         read: function (e) {
+				             //readData(options);
+				        	 e.success(socketCurrentData);
+				        //  window.location.replace("dashboard");
+				             },
+				        update: function (options) {
+				        updateRow(options);
+				        window.location.replace("/");
+				       
+				             },
+				        
+				             destroy: function (options) {
+				            	 deleteRow(options);
+				                readData(options);
+				            	    
+					             },
+					        
+				             create: function (options) {
+					            createRow(options);
+					            window.location.replace("/");
+					            	  },
+				          parameterMap: function (options, operation) {
+				        		if (operation !== "read" && options.models) {
+				              		return { models: kendo.stringify(options.models) };
+				              		}
+				            	}
+				          },
+				        schema: {
+				        	 model: {
+                              id: "siteProjectsId",
+                              fields: {
+                             	 siteProjectsId: {type:"string"},
+                             	 siteInfoId: {type:"string"},
+                             	 projectName: {type:"string"},
+                             	 siteName: {type:"string"},
+                             	 pslc: {type:"string"},
+                             	 poName: {type:"string"},
+                             	 teritory: {type:"string"},
+                             	 market: {type:"string"},
+                             	 poStatus: {type:"string"},
+                             	 siteTracker: {type:"string"},
+                             	 projectStatus: {type:"string"},
+                             	 projectType: {type:"string"},
+                             	 customerProjectType: {type:"string"},
+                             	 lastModifiedBy: {type:"string"},
+                             	 
+                             	 
+                              }
+                          }
+				        },
+				         pageSize: 7
+				    },
+				    pageable: true,
+                 sortable: true,
+                 filterable: true,
+				    resizable:true,
 
-                    function toolbar_click() {
-                    			console.log("Toolbar command is clicked!");
-										  return false;
-										}
-									 var wnd,detailsTemplate;
-/*									
-										$("#grid").kendoGrid({
-											dataSource: {
-										      transport: {
-										         read: function (options) {
-										             readData(options);
-										         //    window.location.replace("dashboard");
-										             },
-										        update: function (options) {
-										        updateGrid(options);
-										        readData(options);
-										             },
-										        
-										             destroy: function (options) {
-										            	 deleteRow(options);
-										            	 readData(options);
-										            	    
-											             },
-											        
-										             create: function (options) {
-											            createRow(options);
-											            readData(options);
-											            	  },
-										          parameterMap: function (options, operation) {
-										        		if (operation !== "read" && options.models) {
-										              		return { models: kendo.stringify(options.models) };
-										              		}
-										            	}
-										          },
-										        schema: {
-										        	 model: {
-					                                     id: "id",
-					                                     fields: {
-					                                    	 poName: { type: "string",validation: { required: true} },
-					                                    	 teritory: { type: "string" ,validation: { required: true}},
-					                                    	 market: {type:"string"},
-					                                    	 pslc: {type:"string"},
-					                                    	 poStatus: { type: "string" ,validation: { required: true}},
-					                                    	 siteTracker:{ type: "string",validation: { required: true} }
-					                                    	 
-					                                     }
-					                                 }
-										        },
-										         pageSize: 10
-										    },
-										    pageable: true,
-					                        sortable: true,
-					                        filterable: true,
-										    resizable:true,
-//										    toolbar: [
-//										        { name: "create", onclick:toolbar_click()},
-//										        { name: "save" },
-//										        { name: "cancel" }
-//										      ],
-// 										    toolbar: kendo.template($("#template").html()),
-						                       toolbar: ["create"],
-										    columns: [
-										    	 { field:"poName", title: "PO Name", width: "140px",template:"<a href='javascript:showDetail(#=id#)' id='name-link'>#=name#</a>" },
-										    	 { field: "id", title:"ID", width: "80px" },
-										    	 { field: "teritory", title:"Teritory", width: "120px" },
-					                             { field: "market", title:"Market", width: "120px" },
-					                            // { field: "role", title:"Role", width: "120px" ,editor: categoryDropDownEditor, template: "#=role.text#"},
-					                             { field: "pslc", title:"pslc", width: "120px" },
-					                             { field: "id", title:"IN_Stock", width: "120px",customBoolEditor },
-					                             { command: ["edit", "destroy"], title: "&nbsp;", width: "200px" }
-					                             ],
-					                   editable: "popup"
-									});
+				    toolbar: [
+				        { name: "create", text: "Add" }
+				      ],
+				    columns: [
+				    	{ field:"siteProjectsId", title:"Site Projects Id", width: "150px", editable: isEditable},
+				    	{ field:"siteInfoId", title:"Site Info Id", width: "120px" ,editable: isEditable},
+				    	{ field:"projectName", title:"Project Name", width: "150px" },
+				    	{ field:"siteName", title:"Site Name", width: "120px" },
+				    	{ field:"pslc", title:"PSLC", width: "120px" },
+				    	{ field:"poName", title:"Purchase Order Name", width: "180px" },
+				    	//{ field:"teritory", title:"Teritory", width: "120px" },
+				    	//{ field:"market" ,title:"Market", width: "120px" },
+				    	//{ field:"poStatus", title:"PO Status", width: "120px" },
+				    	{ field:"siteTracker", title:"Site Trakcer", width: "120px" },
+				    	{ field:"projectStatus", title:"Project Status", width: "120px",customBoolEditor },
+				    	//{ field:"projectType", title:"Project Type", width: "120px" },
+				    	//{ field:"customerProjectType", title:"Customer Project Type", width: "120px" },
+				    	//{ field:"lastModifiedBy", title:"Last Modified", width: "120px" ,customBoolEditor },
+                        { command: ["edit", "destroy"], title: "&nbsp;", width: "200px" }
+                      ],
+            editable: "popup"
+			});
+}
+       	 });
+        });
+    });
+    
+            
+            
+        
+        
+var wnd,detailsTemplate;
+									
+										
 									function customBoolEditor(container, options) {
 										 var guid = kendo.guid();
 					                     $('<input class="k-checkbox" id="' + guid + '" type="checkbox" name="Discontinued" data-type="boolean" data-bind="checked:Discontinued">').appendTo(container);
 					                     $('<label class="k-checkbox-label" for="' + guid + '">​</label>').appendTo(container);
-					                 }*/
-									function showDetail(e) {
-					                     //localStorage.removeItem('currentValue');
-					                     console.log(e);
-					                     localStorage.setItem('currentValue',e);
-					                     //window.location.href='empInfo/'+ e;
 					                 }
 
-
-									 
-									 function onSelect(e) {
-							                if ("kendoConsole" in window) {
-							                    if (e.dataItem) {
-							                        var dataItem = e.dataItem;
-							                        kendoConsole.log("event :: select (" + dataItem.text + " : " + dataItem.value + ")");
-							                    } else {
-							                        kendoConsole.log("event :: select");
-							                    }
-							                }
-							            };
-									function categoryDropDownEditor(container, options) {
-					                    $('<input required name="' + options.field + '"/>')
-					                        .appendTo(container)
-					                        .kendoDropDownList({
-					                            autoBind: false,
-					                            dataTextField: "text",
-					                            dataValueField: "value",
-					                            dataSource:[
-					                                { text: "ADMIN", value: "1" },
-					                                { text: "NUMBER", value: "2" }
-					                              ],
-					                            select: onSelect	
-					                            });
-					                       
-					                }
-
-function readData(options){
+function readData(){
 	$.ajax({
         url: "http://localhost:8088/RePO/getPoRequest",
         dataType: "json",
         cache: false,
         success: function (result) {
+        	console.log(result);
+        	resultData = result;
+        	
         	//$(".k-window-title").empty();
 			//$(".k-window-title").append("New");
 			//var userList=result.items;
-           options.success(result);
+           //options.success(result);
           
         },
         error: function (result) {
-        	options.success(result);
+        	//options.success(result);
          }
        });
 
 }
 
+function updateRow(options){
+	 var sampledata= options.data;
+	$.ajax({
+			 url:"http://localhost:8088/RePO/createPORequest",
+	        contentType: "application/json",
+	        type:"POST",
+	     contentType : "application/json; charset=utf-8",
+	        data:JSON.stringify({
+	        	
+	        		"siteProjectsId":options.data.siteProjectsId,
+	        		"siteInfoId":options.data.siteInfoId,
+	        		"projectName":options.data.projectName,
+	        		"siteName":options.data.siteName,
+	        		"pslc":options.data.pslc,
+	        		"poName":options.data.poName,
+	        		"teritory":options.data.teritory,
+	        		"market":options.data.market,
+	        		"poStatus":options.data.poStatus,
+	        		"siteTracker":options.data.siteTracker,
+	        		"projectStatus":options.data.projectStatus,
+	        		"projectType":options.data.projectType,
+	        		"customerProjectType":options.data.customerProjectType,
+	        		"lastModifiedBy":options.data.lastModifiedBy
+	        		
+	        	}),
+	        success: function (result) {
+	        		 options.success(result);
+	 	    },
+	        error: function (result) {
+	        	options.error(result);
+	         }
+	       });
+}
 
 
-$('#filter').on('input', function (e) {
-    var grid = $('#grid').data('kendoGrid');
-    var columns = grid.columns;
+function createRow(options){
+	 var sampledata= options.data;
+	$.ajax({
+			 url:"http://localhost:8088/RePO/createPORequest",
+	        contentType: "application/json",
+	        type:"POST",
+	     contentType : "application/json; charset=utf-8",
+	        data:JSON.stringify({
+	        	"siteInfoId":options.data.siteInfoId,
+        		"projectName":options.data.projectName,
+        		"siteName":options.data.siteName,
+        		"pslc":options.data.pslc,
+        		"poName":options.data.poName,
+        		"teritory":options.data.teritory,
+        		"market":options.data.market,
+        		"poStatus":options.data.poStatus,
+        		"siteTracker":options.data.siteTracker,
+        		"projectStatus":options.data.projectStatus,
+        		"projectType":options.data.projectType,
+        		"customerProjectType":options.data.customerProjectType,
+        		"lastModifiedBy":options.data.lastModifiedBy,
+        		}),
+	        success: function (result) {
+	        		 options.success(result);
+	 	    },
+	        error: function (result) {
+	        	options.error(result);
+	         }
+	       });
+}
 
-    var filter = { logic: 'or', filters: [] };
-    columns.forEach(function (x) {
-      if (x.field) {
-        var type = grid.dataSource.options.schema.model.fields[x.field].type;
-        if (type == 'string') {
-          filter.filters.push({
-            field: x.field,
-            operator: 'contains',
-            value: e.target.value
-          })
+function deleteRow(options){
+	// sampleData.splice(getIndexById(options.data.id), 1);
+	$.ajax({
+		 url: "http://localhost:8088/RePO/deletePoRequest/"+options.data.siteProjectsId,
+       contentType: "application/json",
+       type:"GET",
+    contentType : "application/json; charset=utf-8",
+       success: function (result) {
+       		 options.success(result);
+	    },
+       error: function (result) {
+       	options.error(result);
         }
-        else if (type == 'number') {
-          if (isNumeric(e.target.value)) {
-            filter.filters.push({
-              field: x.field,
-              operator: 'eq',
-              value: e.target.value
-            });
-          }    
+      });
+}
+       
 
-        } else if (type == 'date') {
-          var data = grid.dataSource.data();
-          for (var i=0;i<data.length ; i++){
-            var dateStr = kendo.format(x.format, data[i][x.field]);
-            // change to includes() if you wish to filter that way https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/includes
-            if(dateStr.startsWith(e.target.value)){
-              filter.filters.push({
-                field: x.field,
-                operator:'eq',
-                value: data[i][x.field]
-              })
-            }
-          }
-        } else if (type == 'boolean' && getBoolean(e.target.value) !== null) {
-          var bool = getBoolean(e.target.value);
-          filter.filters.push({
-            field: x.field,
-            operator: 'eq',
-            value: bool
-          });
-        }               
-      }
-    });
-    grid.dataSource.filter(filter);
-  });
+function isEditable(e){
+    var dataSource = $("#grid").data("kendoGrid").dataSource;
+    // If the id(ProductID) is null, then it is editable.
+    return e.siteProjectsId == null;
+    return e.siteInfoId== null;
+  }
